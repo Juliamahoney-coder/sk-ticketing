@@ -46,13 +46,14 @@ model Team {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  name      String
-  email     String   @unique
-  role      Role
-  teamId    String?
-  team      Team?    @relation(fields: [teamId], references: [id])
-  createdAt DateTime @default(now())
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         Role
+  teamId       String?
+  team         Team?    @relation(fields: [teamId], references: [id])
+  createdAt    DateTime @default(now())
 
   requestedTickets Ticket[] @relation("TicketRequester")
   ownedTickets     Ticket[] @relation("TicketOwner")
