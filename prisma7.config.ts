@@ -9,7 +9,14 @@ export default defineConfig({
     path: "prisma/migrations",
     seed: "tsx prisma/seed.ts",
   },
+  // Prisma 7 removed url/directUrl from schema.prisma entirely — Migrate
+  // and other CLI commands now take their connection from here instead.
+  // This must be the DIRECT (unpooled) connection: Supabase's Transaction
+  // Pooler doesn't support the session-level features (e.g. advisory
+  // locks) that schema migrations need. The running app is unaffected —
+  // it connects via the adapter in lib/prisma.ts, which uses the pooled
+  // DATABASE_URL.
   datasource: {
-    url: process.env["DATABASE_URL"],
+    url: process.env["DIRECT_URL"],
   },
 });
