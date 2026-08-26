@@ -11,3 +11,67 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+enum Role {
+  ADMIN
+  AGENT
+  REQUESTER
+}
+
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  CLOSED
+}
+
+enum TicketPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum TicketSource {
+  BOT
+  MANUAL
+}
+
+model Team {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+
+  users   User[]
+  tickets Ticket[]
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  role      Role
+  teamId    String?
+  team      Team?    @relation(fields: [teamId], references: [id])
+  createdAt DateTime @default(now())
+
+  requestedTickets Ticket[] @relation("TicketRequester")
+  ownedTickets     Ticket[] @relation("TicketOwner")
+}
+
+model Ticket {
+  id          String         @id @default(cuid())
+  title       String
+  description String
+  status      TicketStatus   @default(OPEN)
+  priority    TicketPriority @default(MEDIUM)
+  category    String
+  teamId      String
+  team        Team           @relation(fields: [teamId], references: [id])
+  requesterId String
+  requester   User           @relation("TicketRequester", fields: [requesterId], references: [id])
+  ownerId     String?
+  owner       User?          @relation("TicketOwner", fields: [ownerId], references: [id])
+  source      TicketSource   @default(MANUAL)
+  createdAt   DateTime       @default(now())
+  closedAt    DateTime?
+}
