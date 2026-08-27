@@ -237,3 +237,123 @@ a.row:hover {
   color: var(--sk-danger);
   font-size: 12.5px;
 }
+
+/* Collapsible section toggle (e.g. "Ticket bearbeiten") */
+
+.collapseToggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--sk-accent);
+  cursor: pointer;
+}
+
+/* App shell — sidebar + content, used by app/(protected)/layout.tsx */
+
+.appShell {
+  display: flex;
+  min-height: 100vh;
+  width: 100%;
+}
+
+.sidebar {
+  flex-shrink: 0;
+  width: 220px;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  background: var(--sk-sidebar-bg);
+  color: var(--sk-sidebar-text);
+  padding: 16px 12px;
+}
+
+.appContent {
+  flex: 1;
+  min-width: 0;
+}
+
+.sidebarBrand {
+  display: block;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--sk-sidebar-text);
+  padding: 6px 10px;
+  margin-bottom: 16px;
+}
+
+.sidebarNav {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sidebarNavItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: var(--sk-radius-sm);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--sk-sidebar-text-muted);
+}
+
+.sidebarNavItem:hover {
+  background: var(--sk-sidebar-hover-bg);
+  color: var(--sk-sidebar-text);
+}
+
+.sidebarNavButton {
+  composes: sidebarNavItem;
+  background: var(--sk-accent);
+  color: #fff;
+  font-weight: 600;
+  margin-top: 4px;
+}
+
+.sidebarNavButton:hover {
+  background: var(--sk-accent);
+  color: #fff;
+  opacity: 0.92;
+}
+
+.sidebarUser {
+  border-top: 1px solid var(--sk-sidebar-border);
+  padding-top: 12px;
+}
+
+.sidebarUserName {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--sk-sidebar-text);
+}
+
+.sidebarUserRole {
+  font-size: 11px;
+  color: var(--sk-sidebar-text-muted);
+  margin: 2px 0 8px;
+}
+
+.sidebarLogout {
+  font-size: 11px;
+  color: var(--sk-sidebar-text-muted);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.sidebarLogout:hover {
+  color: var(--sk-sidebar-text);
+}
