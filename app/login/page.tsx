@@ -3,6 +3,7 @@
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import styles from "@/app/styles/ui.module.css";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -34,34 +35,56 @@ export default function LoginPage() {
   }
 
   return (
-    <main style={{ maxWidth: 360, margin: "80px auto", fontFamily: "sans-serif" }}>
-      <h1>Login</h1>
-      <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-        <label>
-          Email
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            style={{ width: "100%", padding: 8 }}
-          />
-        </label>
-        <label>
-          Passwort
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            style={{ width: "100%", padding: 8 }}
-          />
-        </label>
-        {error && <p style={{ color: "crimson" }}>{error}</p>}
-        <button type="submit" disabled={submitting} style={{ padding: 8 }}>
-          {submitting ? "Lädt…" : "Einloggen"}
-        </button>
-      </form>
+    <main className={styles.page} style={{ maxWidth: 380, marginTop: 80 }}>
+      <div className={styles.pageHeader}>
+        <h1 className={styles.pageTitle}>Login</h1>
+      </div>
+
+      <div className={styles.card}>
+        <form onSubmit={handleSubmit}>
+          <div className={styles.field}>
+            <label className={styles.label} htmlFor="email">
+              Email
+            </label>
+            <input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              className={styles.input}
+            />
+          </div>
+          <div className={styles.field}>
+            <label className={styles.label} htmlFor="password">
+              Passwort
+            </label>
+            <input
+              id="password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              className={styles.input}
+            />
+          </div>
+          {error && (
+            <p className={styles.errorText} style={{ marginTop: 12 }}>
+              {error}
+            </p>
+          )}
+          <div className={styles.field}>
+            <button
+              type="submit"
+              disabled={submitting}
+              className={styles.buttonPrimary}
+              style={{ width: "100%" }}
+            >
+              {submitting ? "Lädt…" : "Einloggen"}
+            </button>
+          </div>
+        </form>
+      </div>
     </main>
   );
 }
