@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
-import { Role, TicketStatus } from "@/app/generated/prisma/client";
+import { Role, TicketPriority, TicketStatus } from "@/app/generated/prisma/client";
+import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
 import { getVisibleTicketById } from "@/lib/tickets";
 import {
@@ -9,7 +10,8 @@ import {
   statusBadgeVariant,
 } from "@/lib/ticket-display";
 import styles from "@/app/styles/ui.module.css";
-import { updateTicketStatus } from "../actions";
+import { updateTicketFields, updateTicketStatus } from "../actions";
+import { EditTicketForm } from "./edit-ticket-form";
 
 export default async function TicketDetailPage({
   params,
@@ -26,8 +28,10 @@ export default async function TicketDetailPage({
     notFound();
   }
 
-  const canChangeStatus = user.role === Role.AGENT || user.role === Role.ADMIN;
+  const canEdit = user.role === Role.AGENT || user.role === Role.ADMIN;
   const updateStatusForTicket = updateTicketStatus.bind(null, ticket.id);
+  const updateFieldsForTicket = updateTicketFields.bind(null, ticket.id);
+  const teams = canEdit ? await prisma.team.findMany({ orderBy: { name: "asc" } }) : [];
 
   return (
     <main className={styles.page} style={{ maxWidth: 860 }}>
@@ -52,7 +56,22 @@ export default async function TicketDetailPage({
             </p>
           </div>
 
-          {canChangeStatus && (
+          {canEdit && (
+            <EditTicketForm
+              action={updateFieldsForTicket}
+              title={ticket.title}
+              priority={ticket.priority}
+              teamId={ticket.teamId}
+              category={ticket.category}
+              teams={teams}
+              priorities={Object.values(TicketPriority).map((value) => ({
+                value,
+                label: PRIORITY_LABELS[value],
+              }))}
+            />
+          )}
+
+          {canEdit && (
             <div className={styles.card}>
               <p className={styles.label}>Status ändern</p>
               <form

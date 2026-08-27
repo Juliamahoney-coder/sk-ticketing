@@ -31,6 +31,13 @@
 
   /* Type */
   --sk-font: -apple-system, "Segoe UI", Arial, sans-serif;
+
+  /* Sidebar (offset dark surface — reuses existing tokens where possible) */
+  --sk-sidebar-bg: var(--sk-text-primary);
+  --sk-sidebar-text: var(--sk-content-bg);
+  --sk-sidebar-text-muted: #9c998d;
+  --sk-sidebar-border: rgba(255, 255, 255, 0.08);
+  --sk-sidebar-hover-bg: rgba(255, 255, 255, 0.06);
 }
 
 html {
