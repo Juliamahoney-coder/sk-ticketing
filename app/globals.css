@@ -38,6 +38,13 @@
   --sk-sidebar-text-muted: #9c998d;
   --sk-sidebar-border: rgba(255, 255, 255, 0.08);
   --sk-sidebar-hover-bg: rgba(255, 255, 255, 0.06);
+
+  /* Comment visibility (from the mockup's internal/external comment tabs) */
+  --sk-comment-internal-bg: #fdf6e5;
+  --sk-comment-internal-text: #8a6a0e;
+  --sk-comment-internal-border: #c2960e;
+  --sk-comment-external-bg: #e7eef9;
+  --sk-comment-external-text: #1d4e89;
 }
 
 html {
