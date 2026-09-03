@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Role, TicketPriority, TicketStatus } from "@/app/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
@@ -60,29 +61,91 @@ export default async function TicketDetailPage({
   );
 
   return (
-    <main className={styles.page} style={{ maxWidth: 860 }}>
+    <main className={styles.page} style={{ maxWidth: 1120 }}>
       <div className={styles.pageHeader} style={{ alignItems: "flex-start" }}>
         <div>
-          <p className={styles.metaText} style={{ fontSize: 11 }}>
-            Ticket
-          </p>
+          <span className={styles.breadcrumb}>
+            <Link href="/tickets">Tickets</Link> › #{ticket.id.slice(-4)}
+          </span>
           <h1 className={styles.pageTitle}>{ticket.title}</h1>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 10 }}>
+            <span className={`${styles.badge} ${styles[statusBadgeVariant(ticket.status)]}`}>
+              {STATUS_LABELS[ticket.status]}
+            </span>
+            <span className={`${styles.badge} ${styles.badgeNeutral}`}>{ticket.team.name}</span>
+            <span className={styles[priorityVariant(ticket.priority)]}>
+              <span className={styles.priorityDot} />
+              {PRIORITY_LABELS[ticket.priority]}
+            </span>
+          </div>
         </div>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1.6fr 1fr", gap: 14 }}>
+      <div style={{ display: "grid", gridTemplateColumns: canEdit ? "1.6fr 1fr" : "1fr", gap: 20 }}>
         <div className={styles.cardStack}>
           <div className={styles.card}>
             <p className={styles.note}>
               <i className="ti ti-lock" />
               Beschreibung · nicht editierbar
             </p>
-            <p style={{ whiteSpace: "pre-wrap", fontSize: 13, lineHeight: 1.5 }}>
+            <p style={{ whiteSpace: "pre-wrap", fontSize: 14, lineHeight: 1.5 }}>
               {ticket.description}
             </p>
+
+            <div className={styles.infoGrid}>
+              <div className={styles.infoItem}>
+                <span className={styles.infoLabel}>Status</span>
+                <span className={`${styles.badge} ${styles[statusBadgeVariant(ticket.status)]}`}>
+                  {STATUS_LABELS[ticket.status]}
+                </span>
+              </div>
+              <div className={styles.infoItem}>
+                <span className={styles.infoLabel}>Priorität</span>
+                <span className={styles[priorityVariant(ticket.priority)]}>
+                  <span className={styles.priorityDot} />
+                  {PRIORITY_LABELS[ticket.priority]}
+                </span>
+              </div>
+              <div className={styles.infoItem}>
+                <span className={styles.infoLabel}>Team</span>
+                <span className={`${styles.badge} ${styles.badgeNeutral}`}>{ticket.team.name}</span>
+              </div>
+              <div className={styles.infoItem}>
+                <span className={styles.infoLabel}>Kategorie</span>
+                <span className={styles.infoValue}>{ticket.category}</span>
+              </div>
+              <div className={styles.infoItem}>
+                <span className={styles.infoLabel}>Ersteller</span>
+                <span className={styles.infoValue}>{ticket.requester.name}</span>
+              </div>
+              <div className={styles.infoItem}>
+                <span className={styles.infoLabel}>Bearbeiter</span>
+                <span className={styles.infoValue}>{ticket.owner?.name ?? "—"}</span>
+              </div>
+              <div className={styles.infoItem}>
+                <span className={styles.infoLabel}>Erstellt</span>
+                <span className={styles.infoValue}>{ticket.createdAt.toLocaleString("de-DE")}</span>
+              </div>
+              <div className={styles.infoItem}>
+                <span className={styles.infoLabel}>Geschlossen</span>
+                <span className={styles.infoValue}>
+                  {ticket.closedAt ? ticket.closedAt.toLocaleString("de-DE") : "—"}
+                </span>
+              </div>
+            </div>
           </div>
 
-          {canEdit && (
+          <CommentsSection
+            comments={comments}
+            currentUserId={user.id}
+            canChooseVisibility={user.role !== Role.REQUESTER}
+            createAction={createCommentForTicket}
+            updateAction={updateComment}
+          />
+        </div>
+
+        {canEdit && (
+          <div className={styles.cardStack}>
             <EditTicketForm
               action={updateFieldsForTicket}
               title={ticket.title}
@@ -95,14 +158,12 @@ export default async function TicketDetailPage({
                 label: PRIORITY_LABELS[value],
               }))}
             />
-          )}
 
-          {canEdit && (
             <div className={styles.card}>
               <p className={styles.label}>Status ändern</p>
               <form
                 action={updateStatusForTicket}
-                style={{ display: "flex", gap: 8, alignItems: "center" }}
+                style={{ display: "flex", flexDirection: "column", gap: 10 }}
               >
                 <select name="status" defaultValue={ticket.status} className={styles.select}>
                   {Object.values(TicketStatus).map((status) => (
@@ -111,77 +172,13 @@ export default async function TicketDetailPage({
                     </option>
                   ))}
                 </select>
-                <button type="submit" className={styles.buttonPrimary}>
-                  Aktualisieren
+                <button type="submit" className={styles.buttonSecondary} style={{ width: "100%" }}>
+                  Status aktualisieren
                 </button>
               </form>
             </div>
-          )}
-
-          <CommentsSection
-            comments={comments}
-            currentUserId={user.id}
-            canChooseVisibility={user.role !== Role.REQUESTER}
-            createAction={createCommentForTicket}
-            updateAction={updateComment}
-          />
-        </div>
-
-        <div className={styles.card}>
-          <p className={styles.label} style={{ marginBottom: 8 }}>
-            Ticket-Info
-          </p>
-          <table className={styles.infoTable}>
-            <tbody>
-              <tr>
-                <td className={styles.infoLabel}>Status</td>
-                <td className={styles.infoValue}>
-                  <span className={`${styles.badge} ${styles[statusBadgeVariant(ticket.status)]}`}>
-                    {STATUS_LABELS[ticket.status]}
-                  </span>
-                </td>
-              </tr>
-              <tr>
-                <td className={styles.infoLabel}>Priorität</td>
-                <td className={`${styles.infoValue} ${styles[priorityVariant(ticket.priority)]}`}>
-                  {PRIORITY_LABELS[ticket.priority]}
-                </td>
-              </tr>
-              <tr>
-                <td className={styles.infoLabel}>Team</td>
-                <td className={styles.infoValue}>
-                  <span className={`${styles.badge} ${styles.badgeNeutral}`}>{ticket.team.name}</span>
-                </td>
-              </tr>
-              <tr>
-                <td className={styles.infoLabel}>Kategorie</td>
-                <td className={styles.infoValue}>{ticket.category}</td>
-              </tr>
-              <tr>
-                <td className={styles.infoLabel}>Ersteller</td>
-                <td className={styles.infoValue}>{ticket.requester.name}</td>
-              </tr>
-              <tr>
-                <td className={styles.infoLabel}>Bearbeiter</td>
-                <td className={styles.infoValue}>{ticket.owner?.name ?? "—"}</td>
-              </tr>
-              <tr>
-                <td className={styles.infoLabel}>Erstellt am</td>
-                <td className={`${styles.infoValue} ${styles.metaText}`}>
-                  {ticket.createdAt.toLocaleString("de-DE")}
-                </td>
-              </tr>
-              {ticket.closedAt && (
-                <tr>
-                  <td className={styles.infoLabel}>Geschlossen am</td>
-                  <td className={`${styles.infoValue} ${styles.metaText}`}>
-                    {ticket.closedAt.toLocaleString("de-DE")}
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+          </div>
+        )}
       </div>
     </main>
   );

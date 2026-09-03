@@ -23,6 +23,16 @@ export type CommentItem = {
   attachments: CommentAttachment[];
 };
 
+function initials(name: string) {
+  return name
+    .split(" ")
+    .filter(Boolean)
+    .map((part) => part[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
+}
+
 function formatFileSize(bytes: number) {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
@@ -65,49 +75,68 @@ function CommentListItem({
   const edited = comment.updatedAt.getTime() !== comment.createdAt.getTime();
   const boundUpdate = updateAction.bind(null, comment.id);
 
-  return (
-    <div className={styles.commentItem}>
-      <div className={styles.commentMeta}>
-        <span className={styles.commentAuthor}>{comment.authorName}</span>
-        <span>{comment.createdAt.toLocaleString("de-DE")}</span>
-        {edited && <span>(bearbeitet)</span>}
-      </div>
+  const itemClass = isOwn
+    ? styles.commentItemOwn
+    : comment.visibility === "INTERNAL"
+      ? styles.commentItemInternal
+      : styles.commentItem;
 
-      {editing ? (
-        <form action={boundUpdate}>
-          <textarea
-            name="body"
-            defaultValue={comment.body}
-            required
-            rows={3}
-            className={styles.textarea}
-          />
-          <div style={{ display: "flex", gap: 8, marginTop: 6 }}>
-            <button type="submit" className={styles.buttonPrimary}>
-              Speichern
-            </button>
-            <button type="button" className={styles.button} onClick={() => setEditing(false)}>
-              Abbrechen
-            </button>
-          </div>
-        </form>
-      ) : (
-        <>
-          <p className={styles.commentBody}>{comment.body}</p>
-          {comment.attachments.length > 0 && (
-            <div className={styles.commentAttachments}>
-              {comment.attachments.map((attachment) => (
-                <CommentAttachmentLink key={attachment.id} attachment={attachment} />
-              ))}
-            </div>
-          )}
+  return (
+    <div className={itemClass}>
+      <span className={styles.commentAvatar}>{initials(comment.authorName)}</span>
+      <div className={styles.commentBodyWrap}>
+        <div className={styles.commentMeta}>
+          <span className={styles.commentAuthor}>{comment.authorName}</span>
           {isOwn && (
-            <button type="button" className={styles.commentEditToggle} onClick={() => setEditing(true)}>
-              Bearbeiten
-            </button>
+            <span className={`${styles.badge} ${styles.badgeDark}`}>Dein Kommentar</span>
           )}
-        </>
-      )}
+          {!isOwn && comment.visibility === "INTERNAL" && (
+            <span className={`${styles.badge} ${styles.badgeAccent}`}>Intern</span>
+          )}
+          <span>{comment.createdAt.toLocaleString("de-DE")}</span>
+          {edited && <span>· bearbeitet</span>}
+        </div>
+
+        {editing ? (
+          <form action={boundUpdate}>
+            <textarea
+              name="body"
+              defaultValue={comment.body}
+              required
+              rows={3}
+              className={styles.textarea}
+            />
+            <div style={{ display: "flex", gap: 10, marginTop: 8 }}>
+              <button type="submit" className={`${styles.buttonPrimary} ${styles.buttonSm}`}>
+                Speichern
+              </button>
+              <button
+                type="button"
+                className={`${styles.buttonGhost} ${styles.buttonSm}`}
+                onClick={() => setEditing(false)}
+              >
+                Abbrechen
+              </button>
+            </div>
+          </form>
+        ) : (
+          <>
+            <p className={styles.commentBody}>{comment.body}</p>
+            {comment.attachments.length > 0 && (
+              <div className={styles.commentAttachments}>
+                {comment.attachments.map((attachment) => (
+                  <CommentAttachmentLink key={attachment.id} attachment={attachment} />
+                ))}
+              </div>
+            )}
+            {isOwn && (
+              <button type="button" className={styles.commentEditToggle} onClick={() => setEditing(true)}>
+                Bearbeiten
+              </button>
+            )}
+          </>
+        )}
+      </div>
     </div>
   );
 }
@@ -122,29 +151,36 @@ function NewCommentForm({
   createAction: (formData: FormData) => void;
 }) {
   return (
-    <form action={createAction}>
+    <form action={createAction} style={{ borderTop: "1px solid var(--sk-border-light)", paddingTop: 16, marginTop: 4 }}>
       <div className={styles.field}>
+        <label className={styles.label} htmlFor="comment-body">
+          Neuer Kommentar
+        </label>
         <textarea
+          id="comment-body"
           name="body"
-          placeholder="Kommentar hinzufügen…"
+          placeholder="Antwort an den Ersteller oder interne Notiz …"
           required
           rows={3}
           className={styles.textarea}
         />
       </div>
-      <div className={styles.field} style={{ display: "flex", gap: 12, alignItems: "center" }}>
-        <input type="file" name="file" className={styles.input} style={{ flex: 1 }} />
-        {canChooseVisibility && (
-          <select name="visibility" defaultValue={visibility} className={styles.select} style={{ width: 140 }}>
-            <option value="INTERNAL">Intern</option>
-            <option value="EXTERNAL">Extern</option>
-          </select>
-        )}
-      </div>
-      <div className={styles.field}>
-        <button type="submit" className={styles.buttonPrimary}>
-          Kommentieren
-        </button>
+      <div
+        className={styles.field}
+        style={{ display: "flex", gap: 12, alignItems: "center", justifyContent: "space-between", flexWrap: "wrap" }}
+      >
+        <input type="file" name="file" className={styles.input} style={{ flex: 1, minWidth: 200 }} />
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          {canChooseVisibility && (
+            <select name="visibility" defaultValue={visibility} className={styles.select} style={{ width: 140 }}>
+              <option value="INTERNAL">Intern</option>
+              <option value="EXTERNAL">Extern</option>
+            </select>
+          )}
+          <button type="submit" className={styles.buttonPrimary}>
+            Kommentar senden
+          </button>
+        </div>
       </div>
     </form>
   );
@@ -173,27 +209,30 @@ export function CommentsSection({
     : comments;
 
   return (
-    <div className={styles.card} style={{ padding: 0, overflow: "hidden" }}>
-      {canChooseVisibility && (
-        <div className={styles.commentTabs}>
-          <button
-            type="button"
-            onClick={() => setActiveTab("INTERNAL")}
-            className={`${styles.commentTab} ${activeTab === "INTERNAL" ? styles.commentTabInternalActive : ""}`}
-          >
-            Intern
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab("EXTERNAL")}
-            className={`${styles.commentTab} ${activeTab === "EXTERNAL" ? styles.commentTabExternalActive : ""}`}
-          >
-            Extern
-          </button>
-        </div>
-      )}
+    <div className={styles.card}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, marginBottom: 16 }}>
+        <h2 className={styles.cardTitle}>Kommentare</h2>
+        {canChooseVisibility && (
+          <div className={styles.commentTabs}>
+            <button
+              type="button"
+              onClick={() => setActiveTab("INTERNAL")}
+              className={`${styles.commentTab} ${activeTab === "INTERNAL" ? styles.commentTabInternalActive : ""}`}
+            >
+              Intern
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("EXTERNAL")}
+              className={`${styles.commentTab} ${activeTab === "EXTERNAL" ? styles.commentTabExternalActive : ""}`}
+            >
+              Extern
+            </button>
+          </div>
+        )}
+      </div>
 
-      <div style={{ padding: 14 }}>
+      {canChooseVisibility && (
         <p
           className={
             activeTab === "INTERNAL"
@@ -201,31 +240,37 @@ export function CommentsSection({
               : styles.commentVisibilityNoteExternal
           }
         >
-          {activeTab === "INTERNAL" ? "Nur für Bearbeiter sichtbar" : "Sichtbar für den Ticketersteller"}
+          {activeTab === "INTERNAL" ? (
+            <>
+              <i className="ti ti-lock" /> Interne Kommentare sind nur für AGENT und ADMIN sichtbar.
+            </>
+          ) : (
+            "Sichtbar für den Ticketersteller."
+          )}
         </p>
+      )}
 
-        <div className={styles.commentList}>
-          {visibleComments.length === 0 && <p className={styles.metaText}>Noch keine Kommentare.</p>}
-          {visibleComments.map((comment) => (
-            <CommentListItem
-              key={comment.id}
-              comment={comment}
-              isOwn={comment.authorId === currentUserId}
-              updateAction={updateAction}
-            />
-          ))}
-        </div>
-
-        <NewCommentForm
-          // Remount on tab switch — otherwise the uncontrolled visibility
-          // <select> keeps whatever value it had at first mount instead
-          // of following the active tab.
-          key={activeTab}
-          visibility={activeTab}
-          canChooseVisibility={canChooseVisibility}
-          createAction={createAction}
-        />
+      <div className={styles.commentList}>
+        {visibleComments.length === 0 && <p className={styles.metaText}>Noch keine Kommentare.</p>}
+        {visibleComments.map((comment) => (
+          <CommentListItem
+            key={comment.id}
+            comment={comment}
+            isOwn={comment.authorId === currentUserId}
+            updateAction={updateAction}
+          />
+        ))}
       </div>
+
+      <NewCommentForm
+        // Remount on tab switch — otherwise the uncontrolled visibility
+        // <select> keeps whatever value it had at first mount instead
+        // of following the active tab.
+        key={activeTab}
+        visibility={activeTab}
+        canChooseVisibility={canChooseVisibility}
+        createAction={createAction}
+      />
     </div>
   );
 }

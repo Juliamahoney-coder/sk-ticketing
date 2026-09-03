@@ -1,50 +1,66 @@
+@import url("https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,400;0,700;0,900;1,700&display=swap");
+
 :root {
   /* Surfaces */
-  --sk-bg: #f0ead9;
-  --sk-content-bg: #faf6ec;
+  --sk-bg: #f1f2f4;
+  --sk-content-bg: #ffffff;
   --sk-card-bg: #ffffff;
-  --sk-row-hover-bg: #fbf8f0;
+  --sk-row-hover-bg: #f1f2f4;
 
   /* Borders & radius */
-  --sk-border: #e8e1d0;
-  --sk-border-light: #f4f0e8;
+  --sk-border: #e3e5e9;
+  --sk-border-light: #e3e5e9;
+  --sk-border-default: #c9cdd4;
   --sk-radius-sm: 6px;
   --sk-radius-md: 10px;
-  --sk-radius-lg: 12px;
+  --sk-radius-lg: 16px;
+  --sk-radius-pill: 999px;
 
   /* Text */
-  --sk-text-primary: #20201c;
-  --sk-text-secondary: #6b6a63;
-  --sk-text-tertiary: #8a8880;
+  --sk-text-primary: #111213;
+  --sk-text-secondary: #666d76;
+  --sk-text-tertiary: #868d97;
 
-  /* Accent (terracotta) */
-  --sk-accent: #b5560e;
-  --sk-accent-bg: #fdf3e9;
+  /* Brand red — reserved for logo, active nav, primary buttons, errors/high priority */
+  --sk-red: #c10223;
+  --sk-red-hover: #a80220;
+  --sk-red-050: #fdf2f4;
+
+  /* Accent (blue) — the single UI accent: links, focus, info */
+  --sk-accent: #0a6f9b;
+  --sk-accent-hover: #095c81;
+  --sk-accent-bg: #eff6fa;
 
   /* Status / priority semantics */
-  --sk-danger: #c22a2a;
-  --sk-danger-bg: #fdedea;
-  --sk-warning: #c2790e;
-  --sk-warning-bg: #fdf1e2;
-  --sk-success: #3b6d11;
-  --sk-success-bg: #eaf3de;
+  --sk-danger: #c10223;
+  --sk-danger-bg: #fdf2f4;
+  --sk-warning: #b4690e;
+  --sk-warning-bg: #fcf4e8;
+  --sk-success: #2f7a4b;
+  --sk-success-bg: #edf6f0;
+
+  /* Shadows & focus */
+  --sk-shadow-card: 0 1px 2px rgba(38, 38, 38, 0.06), 0 4px 14px rgba(38, 38, 38, 0.08);
+  --sk-focus-ring: 0 0 0 3px rgba(10, 111, 155, 0.35);
 
   /* Type */
-  --sk-font: -apple-system, "Segoe UI", Arial, sans-serif;
+  --sk-font: "Lato", "Segoe UI", system-ui, sans-serif;
 
-  /* Sidebar (offset dark surface — reuses existing tokens where possible) */
-  --sk-sidebar-bg: var(--sk-text-primary);
-  --sk-sidebar-text: var(--sk-content-bg);
-  --sk-sidebar-text-muted: #9c998d;
-  --sk-sidebar-border: rgba(255, 255, 255, 0.08);
-  --sk-sidebar-hover-bg: rgba(255, 255, 255, 0.06);
+  /* Sidebar — white, per the neutral variant */
+  --sk-sidebar-bg: #ffffff;
+  --sk-sidebar-text: var(--sk-text-primary);
+  --sk-sidebar-text-muted: var(--sk-text-secondary);
+  --sk-sidebar-border: var(--sk-border);
+  --sk-sidebar-hover-bg: var(--sk-bg);
+  --sk-sidebar-active-bg: var(--sk-red);
+  --sk-sidebar-active-text: #ffffff;
 
-  /* Comment visibility (from the mockup's internal/external comment tabs) */
-  --sk-comment-internal-bg: #fdf6e5;
-  --sk-comment-internal-text: #8a6a0e;
-  --sk-comment-internal-border: #c2960e;
-  --sk-comment-external-bg: #e7eef9;
-  --sk-comment-external-text: #1d4e89;
+  /* Comment visibility (internal = blue tint, external = neutral, own = light grey) */
+  --sk-comment-internal-bg: #eff6fa;
+  --sk-comment-internal-text: #074a69;
+  --sk-comment-internal-border: #cfe4ee;
+  --sk-comment-external-bg: #ffffff;
+  --sk-comment-external-text: var(--sk-text-secondary);
 }
 
 html {
@@ -75,6 +91,6 @@ body {
 }
 
 a {
-  color: inherit;
+  color: var(--sk-accent);
   text-decoration: none;
 }

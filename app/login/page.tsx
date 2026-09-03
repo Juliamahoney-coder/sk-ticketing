@@ -2,6 +2,7 @@
 
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { useState } from "react";
 import styles from "@/app/styles/ui.module.css";
 
@@ -26,7 +27,7 @@ export default function LoginPage() {
     setSubmitting(false);
 
     if (result?.error) {
-      setError("Email oder Passwort ist falsch.");
+      setError("E-Mail oder Passwort ist falsch.");
       return;
     }
 
@@ -35,16 +36,21 @@ export default function LoginPage() {
   }
 
   return (
-    <main className={styles.page} style={{ maxWidth: 380, marginTop: 80 }}>
-      <div className={styles.pageHeader}>
-        <h1 className={styles.pageTitle}>Login</h1>
+    <main className={styles.loginPage}>
+      <div className={styles.loginLogo}>
+        <Image src="/studienkreis-logo.png" alt="Studienkreis" width={180} height={82} priority />
       </div>
 
-      <div className={styles.card}>
+      <div className={styles.loginCard}>
+        <div>
+          <h1 className={styles.pageTitle}>Anmelden</h1>
+          <p className={styles.pageSub}>Interner Zugang für Mitarbeitende.</p>
+        </div>
+
         <form onSubmit={handleSubmit}>
           <div className={styles.field}>
             <label className={styles.label} htmlFor="email">
-              Email
+              E-Mail
             </label>
             <input
               id="email"
@@ -52,6 +58,7 @@ export default function LoginPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              disabled={submitting}
               className={styles.input}
             />
           </div>
@@ -65,14 +72,19 @@ export default function LoginPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+              disabled={submitting}
               className={styles.input}
             />
           </div>
+
           {error && (
-            <p className={styles.errorText} style={{ marginTop: 12 }}>
-              {error}
-            </p>
+            <div className={styles.field}>
+              <p role="alert" className={styles.noticeError}>
+                <i className="ti ti-alert-circle" /> {error}
+              </p>
+            </div>
           )}
+
           <div className={styles.field}>
             <button
               type="submit"
@@ -80,10 +92,15 @@ export default function LoginPage() {
               className={styles.buttonPrimary}
               style={{ width: "100%" }}
             >
-              {submitting ? "Lädt…" : "Einloggen"}
+              {submitting ? "Lädt…" : "Anmelden"}
             </button>
           </div>
         </form>
+
+        <p className={styles.legal}>
+          Zugang wird über das interne Verzeichnis vergeben. Bei Problemen wendest du dich an den
+          IT-Support.
+        </p>
       </div>
     </main>
   );

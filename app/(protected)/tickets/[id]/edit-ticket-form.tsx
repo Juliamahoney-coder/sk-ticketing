@@ -96,8 +96,8 @@ export function EditTicketForm({
             />
           </div>
           <div className={styles.field}>
-            <button type="submit" className={styles.buttonPrimary}>
-              Speichern
+            <button type="submit" className={styles.buttonPrimary} style={{ width: "100%" }}>
+              Änderungen speichern
             </button>
           </div>
         </form>
