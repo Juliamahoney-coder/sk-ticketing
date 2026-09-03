@@ -595,13 +595,7 @@ a.row:hover {
   cursor: pointer;
 }
 
-.commentTabInternalActive {
-  background: #fff;
-  color: var(--sk-text-primary);
-  box-shadow: var(--sk-shadow-card);
-}
-
-.commentTabExternalActive {
+.commentTabActive {
   background: #fff;
   color: var(--sk-text-primary);
   box-shadow: var(--sk-shadow-card);
@@ -612,17 +606,22 @@ a.row:hover {
   margin-bottom: 10px;
 }
 
-.commentVisibilityNoteExternal {
-  font-size: 12px;
-  color: var(--sk-text-secondary);
-  margin-bottom: 10px;
-}
-
 .commentList {
   display: flex;
   flex-direction: column;
   gap: 12px;
   margin-bottom: 16px;
+}
+
+.historyEmpty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  border: 1px dashed var(--sk-border-default);
+  border-radius: var(--sk-radius-md);
+  padding: 36px 24px;
+  text-align: center;
 }
 
 .commentItem {
@@ -659,6 +658,20 @@ a.row:hover {
   justify-content: center;
   font-size: 12px;
   font-weight: 700;
+}
+
+/* Avatar background follows the author's role, same idea as the role
+   badge next to their name */
+.commentAvatarAgent {
+  composes: commentAvatar;
+  background: var(--sk-text-primary);
+  color: #fff;
+}
+
+.commentAvatarAdmin {
+  composes: commentAvatar;
+  background: var(--sk-accent);
+  color: #fff;
 }
 
 .commentBodyWrap {

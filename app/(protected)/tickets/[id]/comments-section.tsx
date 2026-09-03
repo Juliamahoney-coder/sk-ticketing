@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import type { Role } from "@/app/generated/prisma/client";
 import styles from "@/app/styles/ui.module.css";
 
 type Visibility = "INTERNAL" | "EXTERNAL";
+type ComposerTab = "antwort" | "notiz";
 
 type CommentAttachment = {
   id: string;
@@ -20,7 +22,14 @@ export type CommentItem = {
   updatedAt: Date;
   authorId: string;
   authorName: string;
+  authorRole: Role;
   attachments: CommentAttachment[];
+};
+
+const ROLE_BADGE_CLASS: Record<Role, string> = {
+  ADMIN: styles.badgeAccent,
+  AGENT: styles.badgeDark,
+  REQUESTER: styles.badgeNeutral,
 };
 
 function initials(name: string) {
@@ -75,26 +84,42 @@ function CommentListItem({
   const edited = comment.updatedAt.getTime() !== comment.createdAt.getTime();
   const boundUpdate = updateAction.bind(null, comment.id);
 
-  const itemClass = isOwn
-    ? styles.commentItemOwn
-    : comment.visibility === "INTERNAL"
+  // Internal always gets the blue tint, regardless of author — "own" only
+  // shades an external entry, so an agent's own internal note still reads
+  // as internal rather than blending in as a personal comment.
+  const itemClass =
+    comment.visibility === "INTERNAL"
       ? styles.commentItemInternal
-      : styles.commentItem;
+      : isOwn
+        ? styles.commentItemOwn
+        : styles.commentItem;
+
+  const avatarClass =
+    comment.authorRole === "ADMIN"
+      ? styles.commentAvatarAdmin
+      : comment.authorRole === "AGENT"
+        ? styles.commentAvatarAgent
+        : styles.commentAvatar;
 
   return (
     <div className={itemClass}>
-      <span className={styles.commentAvatar}>{initials(comment.authorName)}</span>
+      <span className={avatarClass}>{initials(comment.authorName)}</span>
       <div className={styles.commentBodyWrap}>
         <div className={styles.commentMeta}>
           <span className={styles.commentAuthor}>{comment.authorName}</span>
-          {isOwn && (
-            <span className={`${styles.badge} ${styles.badgeDark}`}>Dein Kommentar</span>
-          )}
-          {!isOwn && comment.visibility === "INTERNAL" && (
-            <span className={`${styles.badge} ${styles.badgeAccent}`}>Intern</span>
+          <span className={`${styles.badge} ${ROLE_BADGE_CLASS[comment.authorRole]}`}>
+            {comment.authorRole}
+          </span>
+          {comment.visibility === "INTERNAL" && (
+            <span className={`${styles.badge} ${styles.badgeAccent}`}>Interne Notiz</span>
           )}
           <span>{comment.createdAt.toLocaleString("de-DE")}</span>
           {edited && <span>· bearbeitet</span>}
+          {isOwn && !editing && (
+            <button type="button" className={styles.commentEditToggle} onClick={() => setEditing(true)}>
+              Bearbeiten
+            </button>
+          )}
         </div>
 
         {editing ? (
@@ -129,11 +154,6 @@ function CommentListItem({
                 ))}
               </div>
             )}
-            {isOwn && (
-              <button type="button" className={styles.commentEditToggle} onClick={() => setEditing(true)}>
-                Bearbeiten
-              </button>
-            )}
           </>
         )}
       </div>
@@ -142,41 +162,84 @@ function CommentListItem({
 }
 
 function NewCommentForm({
-  visibility,
   canChooseVisibility,
   createAction,
 }: {
-  visibility: Visibility;
   canChooseVisibility: boolean;
   createAction: (formData: FormData) => void;
 }) {
+  const [tab, setTab] = useState<ComposerTab>("antwort");
+  const visibility: Visibility = tab === "notiz" ? "INTERNAL" : "EXTERNAL";
+
+  const placeholder =
+    !canChooseVisibility
+      ? "Nachricht an das bearbeitende Team …"
+      : tab === "notiz"
+        ? "Interne Notiz für dein Team …"
+        : "Antwort an den Ersteller …";
+
+  const hint = tab === "notiz" ? "Nur für AGENT und ADMIN sichtbar" : "Sichtbar für Ersteller und Team";
+
   return (
     <form action={createAction} style={{ borderTop: "1px solid var(--sk-border-light)", paddingTop: 16, marginTop: 4 }}>
-      <div className={styles.field}>
+      {canChooseVisibility ? (
+        <div className={styles.commentTabs} style={{ marginBottom: 12 }}>
+          <button
+            type="button"
+            onClick={() => setTab("antwort")}
+            className={`${styles.commentTab} ${tab === "antwort" ? styles.commentTabActive : ""}`}
+          >
+            Antwort
+          </button>
+          <button
+            type="button"
+            onClick={() => setTab("notiz")}
+            className={`${styles.commentTab} ${tab === "notiz" ? styles.commentTabActive : ""}`}
+          >
+            Interne Notiz
+          </button>
+        </div>
+      ) : (
         <label className={styles.label} htmlFor="comment-body">
-          Neuer Kommentar
+          Antwort
         </label>
+      )}
+
+      <div className={styles.field}>
         <textarea
           id="comment-body"
           name="body"
-          placeholder="Antwort an den Ersteller oder interne Notiz …"
+          placeholder={placeholder}
           required
           rows={3}
           className={styles.textarea}
         />
       </div>
+
+      {canChooseVisibility && <input type="hidden" name="visibility" value={visibility} />}
+
       <div
         className={styles.field}
         style={{ display: "flex", gap: 12, alignItems: "center", justifyContent: "space-between", flexWrap: "wrap" }}
       >
-        <input type="file" name="file" className={styles.input} style={{ flex: 1, minWidth: 200 }} />
+        <label
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 8,
+            border: "1px dashed var(--sk-border-default)",
+            borderRadius: "var(--sk-radius-sm)",
+            padding: "9px 14px",
+            fontSize: 13,
+            color: "var(--sk-text-secondary)",
+            cursor: "pointer",
+          }}
+        >
+          <i className="ti ti-paperclip" /> Datei anhängen (max. 10 MB)
+          <input type="file" name="file" style={{ display: "none" }} />
+        </label>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          {canChooseVisibility && (
-            <select name="visibility" defaultValue={visibility} className={styles.select} style={{ width: 140 }}>
-              <option value="INTERNAL">Intern</option>
-              <option value="EXTERNAL">Extern</option>
-            </select>
-          )}
+          {canChooseVisibility && <span className={styles.metaText} style={{ fontSize: 11 }}>{hint}</span>}
           <button type="submit" className={styles.buttonPrimary}>
             Kommentar senden
           </button>
@@ -199,78 +262,41 @@ export function CommentsSection({
   createAction: (formData: FormData) => void;
   updateAction: (commentId: string, formData: FormData) => void;
 }) {
-  const [activeTab, setActiveTab] = useState<Visibility>(canChooseVisibility ? "INTERNAL" : "EXTERNAL");
-
-  // REQUESTER only ever receives EXTERNAL comments from the server, so
-  // no client-side filtering happens for them — this is just choosing
-  // which subset of an already-authorized list to display.
-  const visibleComments = canChooseVisibility
-    ? comments.filter((c) => c.visibility === activeTab)
-    : comments;
-
   return (
     <div className={styles.card}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, marginBottom: 16 }}>
-        <h2 className={styles.cardTitle}>Kommentare</h2>
-        {canChooseVisibility && (
-          <div className={styles.commentTabs}>
-            <button
-              type="button"
-              onClick={() => setActiveTab("INTERNAL")}
-              className={`${styles.commentTab} ${activeTab === "INTERNAL" ? styles.commentTabInternalActive : ""}`}
-            >
-              Intern
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab("EXTERNAL")}
-              className={`${styles.commentTab} ${activeTab === "EXTERNAL" ? styles.commentTabExternalActive : ""}`}
-            >
-              Extern
-            </button>
-          </div>
-        )}
+      <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 16, marginBottom: 16 }}>
+        <h2 className={styles.cardTitle}>Verlauf</h2>
+        <span className={styles.metaText} style={{ fontSize: 11 }}>
+          {comments.length} {comments.length === 1 ? "Eintrag" : "Einträge"} · älteste zuerst
+        </span>
       </div>
 
       {canChooseVisibility && (
-        <p
-          className={
-            activeTab === "INTERNAL"
-              ? styles.commentVisibilityNoteInternal
-              : styles.commentVisibilityNoteExternal
-          }
-        >
-          {activeTab === "INTERNAL" ? (
-            <>
-              <i className="ti ti-lock" /> Interne Kommentare sind nur für AGENT und ADMIN sichtbar.
-            </>
-          ) : (
-            "Sichtbar für den Ticketersteller."
-          )}
+        <p className={styles.commentVisibilityNoteInternal}>
+          <i className="ti ti-lock" /> Interne Notizen stehen im gleichen Verlauf, sind aber nur für
+          AGENT und ADMIN sichtbar.
         </p>
       )}
 
       <div className={styles.commentList}>
-        {visibleComments.length === 0 && <p className={styles.metaText}>Noch keine Kommentare.</p>}
-        {visibleComments.map((comment) => (
-          <CommentListItem
-            key={comment.id}
-            comment={comment}
-            isOwn={comment.authorId === currentUserId}
-            updateAction={updateAction}
-          />
-        ))}
+        {comments.length === 0 ? (
+          <div className={styles.historyEmpty}>
+            <span className={styles.commentAuthor}>Noch keine Einträge.</span>
+            <span className={styles.metaText}>Schreib die erste Nachricht zu diesem Ticket.</span>
+          </div>
+        ) : (
+          comments.map((comment) => (
+            <CommentListItem
+              key={comment.id}
+              comment={comment}
+              isOwn={comment.authorId === currentUserId}
+              updateAction={updateAction}
+            />
+          ))
+        )}
       </div>
 
-      <NewCommentForm
-        // Remount on tab switch — otherwise the uncontrolled visibility
-        // <select> keeps whatever value it had at first mount instead
-        // of following the active tab.
-        key={activeTab}
-        visibility={activeTab}
-        canChooseVisibility={canChooseVisibility}
-        createAction={createAction}
-      />
+      <NewCommentForm canChooseVisibility={canChooseVisibility} createAction={createAction} />
     </div>
   );
 }
