@@ -49,6 +49,7 @@ export default async function TicketDetailPage({
       updatedAt: comment.updatedAt,
       authorId: comment.authorId,
       authorName: comment.author.name,
+      authorRole: comment.author.role,
       attachments: await Promise.all(
         comment.attachments.map(async (attachment) => ({
           id: attachment.id,
