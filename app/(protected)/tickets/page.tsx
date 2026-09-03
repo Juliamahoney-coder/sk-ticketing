@@ -16,11 +16,11 @@ export default async function TicketsPage() {
   const tickets = await getVisibleTickets(user);
 
   return (
-    <main className={styles.page}>
+    <main className={styles.page} style={{ maxWidth: 1120 }}>
       <div className={styles.pageHeader}>
         <div>
           <h1 className={styles.pageTitle}>Tickets</h1>
-          <p className={styles.pageSub}>{tickets.length} sichtbar</p>
+          <p className={styles.pageSub}>{tickets.length} Tickets für deine Rolle sichtbar</p>
         </div>
         <Link href="/tickets/new" className={styles.buttonPrimary}>
           + Neues Ticket
@@ -29,7 +29,26 @@ export default async function TicketsPage() {
 
       <div className={styles.wrap}>
         {tickets.length === 0 ? (
-          <p className={styles.emptyState}>Keine Tickets sichtbar.</p>
+          <>
+            <div className={styles.tableHeaderRow} style={{ gridTemplateColumns: COLUMNS }}>
+              <div>Titel</div>
+              <div>Status</div>
+              <div>Priorität</div>
+              <div>Team</div>
+              <div>Erstellt am</div>
+            </div>
+            <div className={styles.emptyState}>
+              <i className={`ti ti-inbox ${styles.emptyStateIcon}`} />
+              <span className={styles.emptyStateTitle}>Keine Tickets sichtbar.</span>
+              <span>
+                Sobald du ein Ticket erstellst oder dir eines zugewiesen wird, erscheint es in
+                dieser Liste.
+              </span>
+              <Link href="/tickets/new" className={`${styles.buttonOutline} ${styles.buttonSm}`}>
+                + Neues Ticket
+              </Link>
+            </div>
+          </>
         ) : (
           <>
             <div className={styles.tableHeaderRow} style={{ gridTemplateColumns: COLUMNS }}>
@@ -53,6 +72,7 @@ export default async function TicketsPage() {
                   </span>
                 </div>
                 <div className={styles[priorityVariant(ticket.priority)]}>
+                  <span className={styles.priorityDot} />
                   {PRIORITY_LABELS[ticket.priority]}
                 </div>
                 <div>

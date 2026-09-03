@@ -10,7 +10,7 @@ export function SidebarLogoutButton() {
       onClick={() => signOut({ callbackUrl: "/login" })}
       className={styles.sidebarLogout}
     >
-      Logout
+      <i className="ti ti-logout" /> Logout
     </button>
   );
 }

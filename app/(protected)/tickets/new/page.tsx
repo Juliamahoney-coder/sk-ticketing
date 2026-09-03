@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { TicketPriority } from "@/app/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
@@ -13,9 +14,14 @@ export default async function NewTicketPage() {
   const teams = await prisma.team.findMany({ orderBy: { name: "asc" } });
 
   return (
-    <main className={styles.page} style={{ maxWidth: 560 }}>
+    <main className={styles.page} style={{ maxWidth: 760 }}>
       <div className={styles.pageHeader}>
-        <h1 className={styles.pageTitle}>Neues Ticket</h1>
+        <div>
+          <span className={styles.breadcrumb}>
+            <Link href="/tickets">Tickets</Link> › Neues Ticket
+          </span>
+          <h1 className={styles.pageTitle}>Neues Ticket</h1>
+        </div>
       </div>
 
       <div className={styles.card}>
@@ -87,8 +93,21 @@ export default async function NewTicketPage() {
             <input id="category" type="text" name="category" required className={styles.input} />
           </div>
 
-          <div className={styles.field}>
-            <button type="submit" className={styles.buttonPrimary} style={{ width: "100%" }}>
+          <div
+            className={styles.field}
+            style={{
+              display: "flex",
+              justifyContent: "flex-end",
+              gap: 12,
+              borderTop: "1px solid var(--sk-border-light)",
+              paddingTop: 20,
+              marginTop: 20,
+            }}
+          >
+            <Link href="/tickets" className={styles.buttonGhost}>
+              Abbrechen
+            </Link>
+            <button type="submit" className={styles.buttonPrimary}>
               Ticket erstellen
             </button>
           </div>
