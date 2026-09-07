@@ -11,6 +11,7 @@ const TICKET_INCLUDE = {
   team: true,
   requester: true,
   owner: true,
+  followers: { include: { user: true } },
 } satisfies Prisma.TicketInclude;
 
 /**
@@ -21,20 +22,47 @@ const TICKET_INCLUDE = {
  * REQUESTER: only their own tickets
  * AGENT:     only tickets belonging to their own team
  * ADMIN:     everything
+ * Extra to all of the above, never a restriction: being listed as a
+ * follower (TicketFollower) makes a ticket visible regardless of team.
  */
 export function ticketVisibilityWhere(
   user: VisibilityUser
 ): Prisma.TicketWhereInput {
-  switch (user.role) {
-    case Role.ADMIN:
-      return {};
-    case Role.AGENT:
-      // teamId is a required column, so "" never matches any ticket —
-      // an agent with no team of their own correctly sees nothing.
-      return { teamId: user.teamId ?? "" };
-    case Role.REQUESTER:
-      return { requesterId: user.id };
+  if (user.role === Role.ADMIN) {
+    return {};
   }
+
+  const roleWhere: Prisma.TicketWhereInput =
+    user.role === Role.AGENT
+      ? // teamId is a required column, so "" never matches any ticket —
+        // an agent with no team of their own correctly sees nothing.
+        { teamId: user.teamId ?? "" }
+      : { requesterId: user.id };
+
+  return { OR: [roleWhere, { followers: { some: { userId: user.id } } }] };
+}
+
+/**
+ * Whether a user may edit a ticket's fields/status, assign themselves as
+ * owner, or manage its followers. This is deliberately separate from (and
+ * stricter than) ticketVisibilityWhere — being able to see a ticket (e.g.
+ * as a cross-team follower) does not by itself grant edit rights. Every
+ * server action that mutates a ticket must gate on this, not re-derive the
+ * rule — see assertCanEditTicket in app/(protected)/tickets/actions.ts.
+ *
+ * ADMIN:               always
+ * AGENT, same team:    yes (unchanged from before this feature)
+ * Ticket's owner:       yes, even if their team no longer matches
+ * Follower (any team):  no — read + comment only
+ */
+export function canEditTicket(
+  user: VisibilityUser,
+  ticket: { teamId: string; ownerId: string | null }
+): boolean {
+  if (user.role === Role.ADMIN) return true;
+  if (user.role === Role.AGENT && user.teamId === ticket.teamId) return true;
+  if (ticket.ownerId === user.id) return true;
+  return false;
 }
 
 export function getVisibleTickets(user: VisibilityUser) {

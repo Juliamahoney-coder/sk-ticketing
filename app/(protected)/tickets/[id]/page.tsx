@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { Role, TicketPriority, TicketStatus } from "@/app/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
-import { getVisibleTicketById } from "@/lib/tickets";
+import { canEditTicket, getVisibleTicketById } from "@/lib/tickets";
 import { getVisibleComments } from "@/lib/comments";
 import { getSignedAttachmentUrl } from "@/lib/attachments";
 import {
@@ -13,9 +13,16 @@ import {
   statusBadgeVariant,
 } from "@/lib/ticket-display";
 import styles from "@/app/styles/ui.module.css";
-import { updateTicketFields, updateTicketStatus } from "../actions";
+import {
+  assignTicketToMe,
+  followTicket,
+  updateTicketFields,
+  updateTicketFollowers,
+  updateTicketStatus,
+} from "../actions";
 import { createComment, updateComment } from "../comment-actions";
 import { EditTicketForm } from "./edit-ticket-form";
+import { AssignmentPanel } from "./assignment-panel";
 import { CommentsSection, type CommentItem } from "./comments-section";
 
 export default async function TicketDetailPage({
@@ -33,11 +40,23 @@ export default async function TicketDetailPage({
     notFound();
   }
 
-  const canEdit = user.role === Role.AGENT || user.role === Role.ADMIN;
+  const canEdit = canEditTicket(user, ticket);
   const updateStatusForTicket = updateTicketStatus.bind(null, ticket.id);
   const updateFieldsForTicket = updateTicketFields.bind(null, ticket.id);
   const createCommentForTicket = createComment.bind(null, ticket.id);
+  const assignToMeForTicket = assignTicketToMe.bind(null, ticket.id);
+  const followForTicket = followTicket.bind(null, ticket.id);
+  const updateFollowersForTicket = updateTicketFollowers.bind(null, ticket.id);
   const teams = canEdit ? await prisma.team.findMany({ orderBy: { name: "asc" } }) : [];
+  // Follower candidates are teamless by design (point 2 of the spec: any
+  // AGENT/ADMIN, not just this ticket's team) — same role filter the
+  // server action re-validates against in updateTicketFollowers.
+  const followerCandidates = canEdit
+    ? await prisma.user.findMany({
+        where: { role: { in: [Role.AGENT, Role.ADMIN] } },
+        orderBy: { name: "asc" },
+      })
+    : [];
 
   const rawComments = (await getVisibleComments(user, ticket.id)) ?? [];
   const comments: CommentItem[] = await Promise.all(
@@ -178,6 +197,16 @@ export default async function TicketDetailPage({
                 </button>
               </form>
             </div>
+
+            <AssignmentPanel
+              currentUserId={user.id}
+              owner={ticket.owner ? { id: ticket.owner.id, name: ticket.owner.name } : null}
+              followers={ticket.followers.map((f) => ({ id: f.user.id, name: f.user.name }))}
+              candidates={followerCandidates.map((c) => ({ id: c.id, name: c.name }))}
+              assignToMeAction={assignToMeForTicket}
+              followAction={followForTicket}
+              updateFollowersAction={updateFollowersForTicket}
+            />
           </div>
         )}
       </div>
