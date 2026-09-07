@@ -64,6 +64,7 @@ model User {
   ownedTickets        Ticket[]     @relation("TicketOwner")
   comments            Comment[]
   uploadedAttachments Attachment[]
+  followedTickets     TicketFollower[]
 }
 
 model Ticket {
@@ -83,7 +84,24 @@ model Ticket {
   createdAt   DateTime       @default(now())
   closedAt    DateTime?
 
-  comments Comment[]
+  comments  Comment[]
+  followers TicketFollower[]
+}
+
+/**
+ * Ticket "follower" — a user with read+comment access to a ticket outside
+ * their own team (see ticketVisibilityWhere in lib/tickets.ts). Deliberately
+ * does NOT grant edit rights by itself; see canEditTicket.
+ */
+model TicketFollower {
+  id        String   @id @default(cuid())
+  ticketId  String
+  ticket    Ticket   @relation(fields: [ticketId], references: [id])
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@unique([ticketId, userId])
 }
 
 model Comment {
