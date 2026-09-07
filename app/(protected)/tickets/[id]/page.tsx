@@ -13,13 +13,7 @@ import {
   statusBadgeVariant,
 } from "@/lib/ticket-display";
 import styles from "@/app/styles/ui.module.css";
-import {
-  assignTicketToMe,
-  followTicket,
-  updateTicketFields,
-  updateTicketFollowers,
-  updateTicketStatus,
-} from "../actions";
+import { assignTicketToMe, followTicket, updateTicketFields, updateTicketStatus } from "../actions";
 import { createComment, updateComment } from "../comment-actions";
 import { EditTicketForm } from "./edit-ticket-form";
 import { AssignmentPanel } from "./assignment-panel";
@@ -46,17 +40,7 @@ export default async function TicketDetailPage({
   const createCommentForTicket = createComment.bind(null, ticket.id);
   const assignToMeForTicket = assignTicketToMe.bind(null, ticket.id);
   const followForTicket = followTicket.bind(null, ticket.id);
-  const updateFollowersForTicket = updateTicketFollowers.bind(null, ticket.id);
   const teams = canEdit ? await prisma.team.findMany({ orderBy: { name: "asc" } }) : [];
-  // Follower candidates are teamless by design (point 2 of the spec: any
-  // AGENT/ADMIN, not just this ticket's team) — same role filter the
-  // server action re-validates against in updateTicketFollowers.
-  const followerCandidates = canEdit
-    ? await prisma.user.findMany({
-        where: { role: { in: [Role.AGENT, Role.ADMIN] } },
-        orderBy: { name: "asc" },
-      })
-    : [];
 
   const rawComments = (await getVisibleComments(user, ticket.id)) ?? [];
   const comments: CommentItem[] = await Promise.all(
@@ -199,13 +183,12 @@ export default async function TicketDetailPage({
             </div>
 
             <AssignmentPanel
+              ticketId={ticket.id}
               currentUserId={user.id}
               owner={ticket.owner ? { id: ticket.owner.id, name: ticket.owner.name } : null}
               followers={ticket.followers.map((f) => ({ id: f.user.id, name: f.user.name }))}
-              candidates={followerCandidates.map((c) => ({ id: c.id, name: c.name }))}
               assignToMeAction={assignToMeForTicket}
               followAction={followForTicket}
-              updateFollowersAction={updateFollowersForTicket}
             />
           </div>
         )}

@@ -151,6 +151,47 @@ export async function assignTicketToMe(ticketId: string) {
 }
 
 /**
+ * Assigns an explicit owner (not just self) via the dropdown on the
+ * ticket's /settings page. An empty ownerId unassigns (sets it back to
+ * null) rather than being rejected as invalid.
+ *
+ * Candidates are restricted to ADMIN or an AGENT on the ticket's own team
+ * — deliberately narrower than the follower picker (any-team AGENT/ADMIN).
+ * This mirrors ticketVisibilityWhere: without this restriction, an ADMIN
+ * could set an owner who then can't even see the ticket they "own" (a
+ * cross-team AGENT isn't made visible by being owner — see canEditTicket's
+ * doc comment in lib/tickets.ts). Re-validated here server-side, not just
+ * filtered in the <select> on the page.
+ */
+export async function assignTicketToUser(ticketId: string, formData: FormData) {
+  const user = await requireUser();
+  const ticket = await assertCanEditTicket(user, ticketId);
+
+  const ownerId = String(formData.get("ownerId") ?? "").trim();
+
+  if (!ownerId) {
+    await prisma.ticket.update({ where: { id: ticketId }, data: { ownerId: null } });
+    revalidatePath(`/tickets/${ticketId}`);
+    revalidatePath(`/tickets/${ticketId}/settings`);
+    return;
+  }
+
+  const validOwner = await prisma.user.findFirst({
+    where: {
+      id: ownerId,
+      OR: [{ role: Role.ADMIN }, { role: Role.AGENT, teamId: ticket.teamId }],
+    },
+  });
+  if (!validOwner) {
+    throw new Error("Ungültiger Bearbeiter.");
+  }
+
+  await prisma.ticket.update({ where: { id: ticketId }, data: { ownerId: validOwner.id } });
+  revalidatePath(`/tickets/${ticketId}`);
+  revalidatePath(`/tickets/${ticketId}/settings`);
+}
+
+/**
  * "Folgen" quick action — adds the current user as a follower. Ignores the
  * unique-constraint violation from an already-existing follow so a double
  * click (or the row already being there) isn't an error.
